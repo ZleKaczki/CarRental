@@ -1,0 +1,32 @@
+tworzymy bazę o nazwie carinventory
+
+CREATE TABLE users (
+    customer_id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    phone_number VARCHAR(20) NOT NULL
+);
+
+
+CREATE TABLE carlist (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    brand VARCHAR(100),
+    model VARCHAR(100),
+    year INT,
+    color VARCHAR(50),
+    price DECIMAL(10, 2),
+    available TINYINT(1)
+);
+
+CREATE TABLE rental (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT,
+  car_id INT,
+  rental_date DATE,
+  return_date DATE,
+  FOREIGN KEY (user_id) REFERENCES users(customer_id),
+  FOREIGN KEY (car_id) REFERENCES carlist(id)
+);
+
+w kodzie niby jest CREATE IF NOT EXIST ale u mnie nie działało
