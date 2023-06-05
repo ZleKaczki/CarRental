@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import mysql.connector
 
-class CarRentalApp(tk.Tk):
+class CarRentalApp(tk.Tk): #okno aplikacji używamy biblioteki tkinter
     def __init__(self, db):
         super().__init__()
         self.title("Wypożyczalnia samochodów")
@@ -13,7 +13,7 @@ class CarRentalApp(tk.Tk):
         self.notebook.pack(fill=tk.BOTH, expand=True)
 
         self.users_page = UsersPage(self.notebook, self.db, self.cursor)
-        self.notebook.add(self.users_page, text="Użytkownicy")
+        self.notebook.add(self.users_page, text="Klienci")
 
         self.cars_page = CarsPage(self.notebook, self.db, self.cursor)
         self.notebook.add(self.cars_page, text="Samochody")
@@ -21,13 +21,13 @@ class CarRentalApp(tk.Tk):
         self.rentals_page = RentalsPage(self.notebook, self.db, self.cursor)
         self.notebook.add(self.rentals_page, text="Wypożyczenia")
 
-class UsersPage(ttk.Frame):
+class UsersPage(ttk.Frame): #strona klientów
     def __init__(self, notebook, db, cursor):
         super().__init__(notebook)
         self.db = db
         self.cursor = cursor
 
-        label = ttk.Label(self, text='Przeglądaj użytkowników')
+        label = ttk.Label(self, text='Przeglądaj klientów')
         label.pack()
 
         self.users_treeview = ttk.Treeview(self)
@@ -52,6 +52,8 @@ class UsersPage(ttk.Frame):
 
         add_user_button = ttk.Button(self, text="Dodaj użytkownika", command=self.add_user)
         add_user_button.pack()
+        delete_user_button = ttk.Button(self, text="Usuń użytkownika", command=self.delete_user)
+        delete_user_button.pack()
 
     def load_users(self):
         self.users_treeview.delete(*self.users_treeview.get_children())
@@ -62,6 +64,17 @@ class UsersPage(ttk.Frame):
 
     def add_user(self):
         add_user_window = AddUserWindow(self.db, self.cursor, self.load_users)
+
+    def delete_user(self):  #usuwanie uzytkowników. Nie da isę usunąć jeśli są powiązani z tableą rental. Trzeba dodać komunikat o tym
+        selected_item = self.users_treeview.focus()
+        if selected_item:
+            user_id = self.users_treeview.item(selected_item)["values"][0]
+            query = "DELETE FROM users WHERE customer_id = %s"
+            values = (user_id,)
+            self.cursor.execute(query, values)
+            self.db.commit()
+            self.load_users()
+
 
 class AddUserWindow(tk.Toplevel):
     def __init__(self, db, cursor, callback):
@@ -145,6 +158,8 @@ class CarsPage(ttk.Frame):
 
         add_car_button = ttk.Button(self, text="Dodaj samochód", command=self.add_car)
         add_car_button.pack()
+        delete_car_button = ttk.Button(self, text="Usuń samochód", command=self.delete_car)
+        delete_car_button.pack()
 
     def load_cars(self):
         self.cars_treeview.delete(*self.cars_treeview.get_children())
@@ -155,6 +170,16 @@ class CarsPage(ttk.Frame):
 
     def add_car(self):
         add_car_window = AddCarWindow(self.db, self.cursor, self.load_cars)
+
+    def delete_car(self):
+        selected_item = self.cars_treeview.focus()
+        if selected_item:
+            car_id = self.cars_treeview.item(selected_item)["values"][0]
+            query = "DELETE FROM carlist WHERE id = %s"
+            values = (car_id,)
+            self.cursor.execute(query, values)
+            self.db.commit()
+            self.load_cars()
 
 class AddCarWindow(tk.Toplevel):
     def __init__(self, db, cursor, callback):
@@ -229,7 +254,7 @@ class RentalsPage(ttk.Frame):
 
         self.rentals_treeview["columns"] = ( "rental_date", "user_id", "car_id", "return_date")
         self.rentals_treeview.column("#0", width=0, stretch=tk.NO)
-        #self.rentals_treeview.column("rental_id", anchor=tk.W, width=70)
+        #self.rentals_treeview.column("rental_id", anchor=tk.W, width=70) to jest raczej niepotrzebne ale zostawiam na wszelki wypadek. zeby działało poprawnie trzeba do bazy danych dodać ten atrybut i zmienić w kodzie pare rzeczy
         self.rentals_treeview.column("rental_date", anchor=tk.W, width=100)
         self.rentals_treeview.column("user_id", anchor=tk.W, width=70)
         self.rentals_treeview.column("car_id", anchor=tk.W, width=70)
@@ -271,15 +296,19 @@ class AddRentalWindow(tk.Toplevel):
         self.entry_rental_date = ttk.Entry(self)
         self.entry_rental_date.grid(row=0, column=1)
 
-        label_user_id = ttk.Label(self, text="ID użytkownika:")
+        label_user_id = ttk.Label(self, text="Wybierz klienta:")
         label_user_id.grid(row=1, column=0, sticky=tk.E)
-        self.entry_user_id = ttk.Entry(self)
-        self.entry_user_id.grid(row=1, column=1)
+        self.user_id_var = tk.StringVar()
+        self.combo_user_id = ttk.Combobox(self, textvariable=self.user_id_var)
+        self.combo_user_id.grid(row=1, column=1)
+        self.load_users()
 
-        label_car_id = ttk.Label(self, text="ID samochodu:")
+        label_car_id = ttk.Label(self, text="Wybierz samochód:")
         label_car_id.grid(row=2, column=0, sticky=tk.E)
-        self.entry_car_id = ttk.Entry(self)
-        self.entry_car_id.grid(row=2, column=1)
+        self.car_id_var = tk.StringVar()
+        self.combo_car_id = ttk.Combobox(self, textvariable=self.car_id_var)
+        self.combo_car_id.grid(row=2, column=1)
+        self.load_cars()
 
         label_return_date = ttk.Label(self, text="Data zwrotu:")
         label_return_date.grid(row=3, column=0, sticky=tk.E)
@@ -289,26 +318,53 @@ class AddRentalWindow(tk.Toplevel):
         save_button = ttk.Button(self, text="Zapisz", command=self.save_rental)
         save_button.grid(row=4, column=0, columnspan=2)
 
+    def load_users(self):
+        self.combo_user_id['values'] = []
+        self.cursor.execute("SELECT customer_id, first_name, last_name FROM users")
+        users = self.cursor.fetchall()
+        user_options = []
+        for user in users:
+            user_options.append(f"{user[0]} - {user[1]} {user[2]}")
+        self.combo_user_id['values'] = user_options
+
+    def load_cars(self):
+        self.combo_car_id['values'] = []
+        self.cursor.execute("SELECT id, brand, model FROM carlist WHERE available = '1'") #available jest zapisane jako tinyint gdzie 1 to dostępne a 0 niedostępne
+        cars = self.cursor.fetchall()
+        car_options = []
+        for car in cars:
+            car_options.append(f"{car[0]} - {car[1]} {car[2]}")
+        self.combo_car_id['values'] = car_options
+
     def save_rental(self):
         rental_date = self.entry_rental_date.get()
-        user_id = self.entry_user_id.get()
-        car_id = self.entry_car_id.get()
+        user_id = self.user_id_var.get().split()[0]
+        car_id = self.car_id_var.get().split()[0]
         return_date = self.entry_return_date.get()
 
-        query = "INSERT INTO rental (rental_date, user_id, car_id, return_date) VALUES (%s, %s, %s, %s)"
-        values = (rental_date, user_id, car_id, return_date)
-
+        # Sprawdzanie dostępności samochodu na podaną datę. Ale chyba nie działa poprawnie. Do tego może być potrzebna biblioteka time
+        query = "SELECT * FROM rental WHERE car_id = %s AND rental_date = %s"
+        values = (car_id, rental_date)
         self.cursor.execute(query, values)
-        self.db.commit()
+        existing_rentals = self.cursor.fetchall()
 
-        self.callback()
-        self.destroy()
+        if existing_rentals:
+            messagebox.showerror("Błąd", "Samochód jest już zarezerwowany na tę datę.")
+        else:
+            query = "INSERT INTO rental (rental_date, user_id, car_id, return_date) VALUES (%s, %s, %s, %s)"
+            values = (rental_date, user_id, car_id, return_date)
 
-# Połączenie z bazą danych
+            self.cursor.execute(query, values)
+            self.db.commit()
+
+            self.callback()
+            self.destroy()
+
+# Połączenie z bazą danych. Wpisać usera i hasło. Trzeba stworzyć bazę w SQLu, tablice są w polecenia sql
 db = mysql.connector.connect(
     host="localhost",
-    user="   ",
-    password="   ",
+    user=" ",
+    password=" ",
     database="carinventory"
 )
 
