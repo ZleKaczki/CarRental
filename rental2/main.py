@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 import mysql.connector
 
 class CarRentalApp(tk.Tk): #okno aplikacji używamy biblioteki tkinter
@@ -12,6 +13,9 @@ class CarRentalApp(tk.Tk): #okno aplikacji używamy biblioteki tkinter
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill=tk.BOTH, expand=True)
 
+        self.login_page = LoginPage(self.notebook, self.db, self.cursor, self.show_main_window)
+        self.notebook.add(self.login_page, text="Logowanie")
+
         self.users_page = UsersPage(self.notebook, self.db, self.cursor)
         self.notebook.add(self.users_page, text="Klienci")
 
@@ -20,6 +24,13 @@ class CarRentalApp(tk.Tk): #okno aplikacji używamy biblioteki tkinter
 
         self.rentals_page = RentalsPage(self.notebook, self.db, self.cursor)
         self.notebook.add(self.rentals_page, text="Wypożyczenia")
+
+
+
+    def show_main_window(self):
+        self.notebook.forget(0)  # Forget the login page
+        self.main_window = MainWindow(self.notebook, self.db, self.cursor)
+        self.notebook.add(self.main_window, text="Strona główna")
 
 class UsersPage(ttk.Frame): #strona klientów
     def __init__(self, notebook, db, cursor):
@@ -74,7 +85,6 @@ class UsersPage(ttk.Frame): #strona klientów
             self.cursor.execute(query, values)
             self.db.commit()
             self.load_users()
-
 
 class AddUserWindow(tk.Toplevel):
     def __init__(self, db, cursor, callback):
@@ -360,11 +370,46 @@ class AddRentalWindow(tk.Toplevel):
             self.callback()
             self.destroy()
 
+class LoginPage(ttk.Frame):
+    def __init__(self, notebook, db, cursor, login_callback):
+        super().__init__(notebook)
+        self.db = db
+        self.cursor = cursor
+        self.login_callback = login_callback
+
+        label_username = ttk.Label(self, text="Nazwa użytkownika:")
+        label_username.pack()
+        self.entry_username = ttk.Entry(self)
+        self.entry_username.pack()
+
+        label_password = ttk.Label(self, text="Hasło:")
+        label_password.pack()
+        self.entry_password = ttk.Entry(self, show="*")
+        self.entry_password.pack()
+
+        login_button = ttk.Button(self, text="Zaloguj", command=self.login)
+        login_button.pack()
+
+    def login(self):
+        username = self.entry_username.get()
+        password = self.entry_password.get()
+
+        query = "SELECT * FROM users WHERE username = %s AND password = %s"
+        values = (username, password)
+        self.cursor.execute(query, values)
+        user = self.cursor.fetchone()
+
+        if user:
+            self.login_callback()
+        else:
+            tk.messagebox.showerror("Błąd logowania", "Nieprawidłowa nazwa użytkownika lub hasło")
+
+
 # Połączenie z bazą danych. Wpisać usera i hasło. Trzeba stworzyć bazę w SQLu, tablice są w polecenia sql
 db = mysql.connector.connect(
     host="localhost",
-    user=" ",
-    password=" ",
+    user="user",
+    password="user",
     database="carinventory"
 )
 
