@@ -85,9 +85,9 @@ class UsersPage(ttk.Frame): #strona klientów
 
         self.load_users()
 
-        add_user_button = ttk.Button(self, text="Dodaj użytkownika", command=self.add_user)
+        add_user_button = ttk.Button(self, text="Dodaj klienta", command=self.add_user)
         add_user_button.pack()
-        delete_user_button = ttk.Button(self, text="Usuń użytkownika", command=self.delete_user)
+        delete_user_button = ttk.Button(self, text="Usuń klienta", command=self.delete_user)
         delete_user_button.pack()
 
     def load_users(self):
