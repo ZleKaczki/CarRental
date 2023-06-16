@@ -16,21 +16,45 @@ class CarRentalApp(tk.Tk): #okno aplikacji używamy biblioteki tkinter
         self.login_page = LoginPage(self.notebook, self.db, self.cursor, self.show_main_window)
         self.notebook.add(self.login_page, text="Logowanie")
 
-        self.users_page = UsersPage(self.notebook, self.db, self.cursor)
-        self.notebook.add(self.users_page, text="Klienci")
-
-        self.cars_page = CarsPage(self.notebook, self.db, self.cursor)
-        self.notebook.add(self.cars_page, text="Samochody")
-
-        self.rentals_page = RentalsPage(self.notebook, self.db, self.cursor)
-        self.notebook.add(self.rentals_page, text="Wypożyczenia")
-
-
 
     def show_main_window(self):
         self.notebook.forget(0)  # Forget the login page
         self.main_window = MainWindow(self.notebook, self.db, self.cursor)
         self.notebook.add(self.main_window, text="Strona główna")
+
+class MainWindow(ttk.Frame):
+    def __init__(self, notebook, db, cursor):
+        super().__init__(notebook)
+        self.db = db
+        self.cursor = cursor
+
+        # Tworzenie widżetu ttk.Notebook
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(fill=tk.BOTH, expand=True)
+
+        # Dodawanie zakładek do widżetu ttk.Notebook
+        self.add_tab1()
+        self.add_tab2()
+        self.add_tab3()
+
+    def add_tab1(self):
+        tab1 = ttk.Frame(self.notebook)
+
+        self.users_page = UsersPage(self.notebook, self.db, self.cursor)
+        self.notebook.add(self.users_page, text="Klienci")
+
+    def add_tab2(self):
+        tab2 = ttk.Frame(self.notebook)
+
+        self.cars_page = CarsPage(self.notebook, self.db, self.cursor)
+        self.notebook.add(self.cars_page, text="Samochody")
+
+    def add_tab3(self):
+        tab3 = ttk.Frame(self.notebook)
+
+        self.rentals_page = RentalsPage(self.notebook, self.db, self.cursor)
+        self.notebook.add(self.rentals_page, text="Wypożyczenia")
+
 
 class UsersPage(ttk.Frame): #strona klientów
     def __init__(self, notebook, db, cursor):
@@ -394,7 +418,7 @@ class LoginPage(ttk.Frame):
         username = self.entry_username.get()
         password = self.entry_password.get()
 
-        query = "SELECT * FROM users WHERE username = %s AND password = %s"
+        query = "SELECT * FROM admins WHERE username = %s AND password = %s"
         values = (username, password)
         self.cursor.execute(query, values)
         user = self.cursor.fetchone()
@@ -408,8 +432,8 @@ class LoginPage(ttk.Frame):
 # Połączenie z bazą danych. Wpisać usera i hasło. Trzeba stworzyć bazę w SQLu, tablice są w polecenia sql
 db = mysql.connector.connect(
     host="localhost",
-    user="user",
-    password="user",
+    user="root",
+    password="kotek1",
     database="carinventory"
 )
 
