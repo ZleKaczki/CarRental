@@ -20,7 +20,6 @@ CREATE TABLE carlist (
 );
 
 CREATE TABLE rental (
-  id INT PRIMARY KEY AUTO_INCREMENT,
   user_id INT,
   car_id INT,
   rental_date DATE,
