@@ -110,6 +110,7 @@ class UsersPage(ttk.Frame): #strona klientów
             self.db.commit()
             self.load_users()
 
+
 class AddUserWindow(tk.Toplevel):
     def __init__(self, db, cursor, callback):
         super().__init__()
@@ -289,10 +290,10 @@ class RentalsPage(ttk.Frame):
         self.rentals_treeview["columns"] = ( "rental_date", "user_id", "car_id", "return_date")
         self.rentals_treeview.column("#0", width=0, stretch=tk.NO)
         #self.rentals_treeview.column("rental_id", anchor=tk.W, width=70) to jest raczej niepotrzebne ale zostawiam na wszelki wypadek. zeby działało poprawnie trzeba do bazy danych dodać ten atrybut i zmienić w kodzie pare rzeczy
-        self.rentals_treeview.column("rental_date", anchor=tk.W, width=100)
-        self.rentals_treeview.column("user_id", anchor=tk.W, width=70)
-        self.rentals_treeview.column("car_id", anchor=tk.W, width=70)
-        self.rentals_treeview.column("return_date", anchor=tk.W, width=100)
+        self.rentals_treeview.column("rental_date", anchor=tk.W, width=120)
+        self.rentals_treeview.column("user_id", anchor=tk.W, width=120)
+        self.rentals_treeview.column("car_id", anchor=tk.W, width=120)
+        self.rentals_treeview.column("return_date", anchor=tk.W, width=120)
 
         self.rentals_treeview.heading("#0", text="", anchor=tk.W)
         #self.rentals_treeview.heading("rental_id", text="ID", anchor=tk.W)
@@ -401,12 +402,12 @@ class LoginPage(ttk.Frame):
         self.cursor = cursor
         self.login_callback = login_callback
 
-        label_username = ttk.Label(self, text="Nazwa użytkownika:")
+        label_username = ttk.Label(self, text="Nazwa użytkownika:", width=50)
         label_username.pack()
         self.entry_username = ttk.Entry(self)
         self.entry_username.pack()
 
-        label_password = ttk.Label(self, text="Hasło:")
+        label_password = ttk.Label(self, text="Hasło:", width=50)
         label_password.pack()
         self.entry_password = ttk.Entry(self, show="*")
         self.entry_password.pack()
