@@ -98,25 +98,40 @@ class UsersPage(ttk.Frame): #strona klientów
             self.users_treeview.insert("", tk.END, text="", values=user)
 
     def add_user(self):
-        add_user_window = AddUserWindow(self.db, self.cursor, self.load_users)
+        add_user_window = AddUserWindow(self.db, self.cursor, self.load_users, self.check_duplicate_data)
 
-    def delete_user(self):  #usuwanie uzytkowników. Nie da isę usunąć jeśli są powiązani z tableą rental. Trzeba dodać komunikat o tym
+    def delete_user(self):
         selected_item = self.users_treeview.focus()
         if selected_item:
-            user_id = self.users_treeview.item(selected_item)["values"][0]
-            query = "DELETE FROM users WHERE customer_id = %s"
-            values = (user_id,)
-            self.cursor.execute(query, values)
-            self.db.commit()
-            self.load_users()
+            customer_id = self.users_treeview.item(selected_item)["values"][0]
+            # Sprawdzenie czy użytkownik ma powiązania z bazą wypożyczeń
+            query = "SELECT * FROM rental WHERE user_id = %s"
+            self.cursor.execute(query, (customer_id,))
+            rentals = self.cursor.fetchall()
+            if rentals:
+                messagebox.showerror("Błąd", "Nie można usunąć użytkownika, który ma historię wypożyczeń.")
+            else:
+                query = "DELETE FROM users WHERE customer_id = %s"
+                values = (customer_id,)
+                self.cursor.execute(query, values)
+                self.db.commit()
+                self.load_users()
 
+    def check_duplicate_data(self, email, phone_number):
+        self.cursor.execute("SELECT * FROM users WHERE email = %s OR phone_number = %s", (email, phone_number))
+        existing_users = self.cursor.fetchall()
+        if existing_users:
+            messagebox.showerror("Błąd", "Użytkownik o podanym adresie e-mail lub numerze telefonu już istnieje.")
+            return False
+        return True
 
 class AddUserWindow(tk.Toplevel):
-    def __init__(self, db, cursor, callback):
+    def __init__(self, db, cursor, load_users_callback, duplicate_check_callback):
         super().__init__()
         self.db = db
         self.cursor = cursor
-        self.callback = callback
+        self.load_users_callback = load_users_callback
+        self.duplicate_check_callback = duplicate_check_callback
 
         self.title("Dodaj użytkownika")
 
@@ -149,13 +164,16 @@ class AddUserWindow(tk.Toplevel):
         email = self.entry_email.get()
         phone_number = self.entry_phone_number.get()
 
+        if not self.duplicate_check_callback(email, phone_number):
+            return
+
         query = "INSERT INTO users (first_name, last_name, email, phone_number) VALUES (%s, %s, %s, %s)"
         values = (first_name, last_name, email, phone_number)
 
         self.cursor.execute(query, values)
         self.db.commit()
 
-        self.callback()
+        self.load_users_callback()
         self.destroy()
 
 class CarsPage(ttk.Frame):
@@ -206,15 +224,23 @@ class CarsPage(ttk.Frame):
     def add_car(self):
         add_car_window = AddCarWindow(self.db, self.cursor, self.load_cars)
 
+
     def delete_car(self):
         selected_item = self.cars_treeview.focus()
         if selected_item:
             car_id = self.cars_treeview.item(selected_item)["values"][0]
-            query = "DELETE FROM carlist WHERE id = %s"
-            values = (car_id,)
-            self.cursor.execute(query, values)
-            self.db.commit()
-            self.load_cars()
+            # Sprawdzenie czy samochód ma powiązania z bazą wypożyczeń
+            query = "SELECT * FROM rental WHERE car_id = %s"
+            self.cursor.execute(query, (car_id,))
+            rentals = self.cursor.fetchall()
+            if rentals:
+                messagebox.showerror("Błąd", "Nie można usunąć samochodu, który znajduje się w bazie wypożyczeń.")
+            else:
+                query = "DELETE FROM carlist WHERE id = %s"
+                values = (car_id,)
+                self.cursor.execute(query, values)
+                self.db.commit()
+                self.load_cars()
 
 class AddCarWindow(tk.Toplevel):
     def __init__(self, db, cursor, callback):
